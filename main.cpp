@@ -7,7 +7,7 @@ Assumptions:
 - Data length valid range: [0-MAX_DATA_LENTH] inclusive. I.e. 0 length messages are legal.
 - Any thread is allowed to read a message from the 
 - This library is to be used on a device with maximum 256 HW concurent threads 
-
+- NON-BLCOKIUNG MESSAGE PASSING
 Test edge cases, 
 producers continue to generate messages beyong legal limits
 
@@ -146,20 +146,25 @@ int main()
     std::thread producers[10];
     std::thread consumers[8];
     unsigned int created_thread_count = 0;
+    unsigned int max_thread_count = std::min((unsigned int)MAX_THREADS_POSSIBLE, std::max((unsigned int)3, std::thread::hardware_concurrency()));
 
 
 
-    for (auto p : producers) {
-        p = std::thread(ProducerTh, created_thread_count++), std::ref(basic_message_passing_uut));
+//    for (auto p : producers) {
+//        p = std::thread(ProducerTh, created_thread_count++, std::ref(basic_message_passing_uut), max_thread_count);
+    for(int i=0; i<10 ;i++){
+        producers[i] = std::thread(ProducerTh, created_thread_count++, std::ref(basic_message_passing_uut), max_thread_count);
     }
 
-
+    for (int i = 0; i < 10; i++) {
+        producers[i].join();
+    }
 
     // Test with at least 3 threads, up to the maximum the hardware can support (dev & testing with 16 thread supper) or 256
     /*unsigned int*/ created_thread_count = 0;
     std::cout << "Test 2: Testing with maximum hardware utilization\n";
 
-    unsigned int max_thread_count = std::min((unsigned int)MAX_THREADS_POSSIBLE, std::max((unsigned int)3, std::thread::hardware_concurrency()));
+    max_thread_count = std::min((unsigned int)MAX_THREADS_POSSIBLE, std::max((unsigned int)3, std::thread::hardware_concurrency()));
     std::vector<std::thread> thread_pool(max_thread_count);
     srand((unsigned)time(NULL));
 
@@ -183,7 +188,7 @@ int main()
     }
 
 
-    for (int i = 0; i < created_thread_count; i++) {
+    for (unsigned int i = 0; i < created_thread_count; i++) {
         thread_pool.at(i).join();
     }
     /*
@@ -198,11 +203,10 @@ int main()
     Tset with a bad user thread that will use invalid inputs to test library input validation
     */
 
-    /*
     std::cout << "Test 3: Bad user thread will attempt to use invalid library API input values\n";
     std::thread bad_thread(BadUserThread, std::ref(basic_message_passing_uut));
     bad_thread.join();
-    */
+
 
     std::cout << "Test program completed execution." << std::endl;
     return 0;

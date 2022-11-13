@@ -40,14 +40,14 @@ BasicMessagePassing::~BasicMessagePassing() {
 
 /*
   Steps to creating a new message:
-  1 - Create a new message struct object
+   - Create a new message struct object
       - if bad_alloc error is caught, print err message and return NULL
-  2 - intialize the data in the newly created message: 
+   - intialize the data in the newly created message: 
       - len <= 0
 	  - data[MAX_DATA_LENTH] <= 00..
 	  - prev & next pointers <= NULL
-  3 - add it to the created_msgs_doubly_linked_list -- will be used to keep track of all created messsages for the destructor to clear them
-  4 - return the new message object address in memory
+   - add it to the created_msgs_doubly_linked_list -- will be used to keep track of all created messsages for the destructor to clear them
+   - return the new message object address in memory
  */
 message_t* BasicMessagePassing::new_message() {
 
@@ -132,26 +132,29 @@ void BasicMessagePassing::delete_message(message_t* msg) {
 	}
 }
 
-// - Validate inputs
-//			destination_id : valid range [0 - MAX_THREADS_POSSIBLE -1]
-// 1 - Creates a new message wrapper in the queue for thread_id,
-//     init new wrapper dst and msg
-// 2 - Update the corresponding doubly linked list 
+/*
+
+ - Validate inputs
+			destination_id : valid range [0 - MAX_THREADS_POSSIBLE -1]
+ - Creates a new message wrapper in the queue for thread_id,
+     init new wrapper dst and msg
+ - Update the corresponding doubly linked list 
+
+*/
 
 // return error code or zero if success
 int BasicMessagePassing::send(uint8_t destination_id, message_t* msg) {
 	if (destination_id < 0 || destination_id >= MAX_THREADS_POSSIBLE) {
 		std::cout << "!!ERR!! BasicMessagePassing::send received invalid destination id value: " << (int)destination_id << '\n';
 		std::cout << "        valid values of destination id : [0 - " << MAX_THREADS_POSSIBLE << " - 1]\n";
-		return 0;		// TODO - return an error code
+		return INVALID_DESTINATION_ID;
 	}
 
 	if (msg == NULL) {
 		std::cout << "!!ERR!! BasicMessagePassing::send received invalid msg address == NULL\n";
-		return 0;		// TODO - return an error code
+		return INVALID_MSG_ADDRESS;
 	}
 
-	int ret = 0; 
 	message_wrapper* new_wrapper;
 	try {
 		new_wrapper = new message_wrapper;
@@ -159,7 +162,7 @@ int BasicMessagePassing::send(uint8_t destination_id, message_t* msg) {
 	catch (const std::bad_alloc& e) {
 		std::cout << "!!ERR!! BasicMessagePassing::send while creating a wrapper for a message\n";
 		std::cout << e.what() << std::endl;
-		return 0;		// TODO - error code
+		return ERROR_ALLOCATING_DYN_MEM;
 	}
 	new_wrapper->dst = destination_id;
 	new_wrapper->msg = msg;
@@ -175,7 +178,7 @@ int BasicMessagePassing::send(uint8_t destination_id, message_t* msg) {
 	}
 	m_queue[destination_id].unlock();
 
-	return ret;
+	return SUCCESS;
 }
 
 // consume a message wrapper object from the head of the receiver_id queue
@@ -185,11 +188,11 @@ int BasicMessagePassing::recv(uint8_t receiver_id, message_t* msg) {
 	if (receiver_id < 0 || receiver_id >= MAX_THREADS_POSSIBLE) {
 		std::cout << "!!ERR!! BasicMessagePassing::recv received invalid receiver_id id value: " << (int)receiver_id << '\n';
 		std::cout << "        valid values of destination id : [0 - " << MAX_THREADS_POSSIBLE << " - 1]\n";
-		return 0;		// TODO - return an error code
+		return INVALID_RECEIVER_ID;
 	}
 	if (msg == NULL) {
 		std::cout << "!!ERR!! BasicMessagePassing::recv received invalid msg address == NULL\n";
-		return 0;		// TODO - return an error code
+		return INVALID_MSG_ADDRESS;
 	}
 
 	m_queue[receiver_id].lock();
@@ -202,8 +205,5 @@ int BasicMessagePassing::recv(uint8_t receiver_id, message_t* msg) {
 	m_queue[receiver_id].unlock();
 	delete to_del;
 
-
-
-	int ret = 0;
-	return ret;
+	return SUCCESS;
 }
