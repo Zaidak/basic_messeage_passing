@@ -1,0 +1,7 @@
+﻿  main.cpp
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(117,24): warning C4305: 'argument': truncation from 'int' to 'uint8_t'
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(117,14): warning C4309: 'argument': truncation of constant value
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(121,24): warning C4305: 'argument': truncation from 'int' to 'uint8_t'
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(121,14): warning C4309: 'argument': truncation of constant value
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(153,97): error C2059: syntax error: ')'
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(186,23): warning C4018: '<': signed/unsigned mismatch
