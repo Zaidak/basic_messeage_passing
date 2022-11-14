@@ -85,6 +85,7 @@ int main()
     std::thread producer_thread(Test1ProducerTh, std::ref(basic_message_passing_uut)); // thread id is 0 but it doesn't really need it for this test
     std::thread consumer_thread1(Test1ConsumerTh, 1, std::ref(basic_message_passing_uut));
     std::thread consumer_thread2(Test1ConsumerTh, 2, std::ref(basic_message_passing_uut));
+    void MonitorTh(uint8_t thread_id, BasicMessagePassing & bmp);
 
     producer_thread.join();
     consumer_thread1.join();
