@@ -78,7 +78,7 @@ public:
 	*		message_t *	msg
 	*	Return: 
 	*		0 on success
-	*		Error code otherwise	{INVALID_DESTINATION_ID, INVALID_MSG_ADDRESS, ERROR_ALLOCATING_DYN_MEM}
+	*		Error code otherwise	{INVALID_DESTINATION_ID, INVALID_MSG_ADDRESS, or ERROR_ALLOCATING_DYN_MEM}
 	*	Assumptions:
 	*		The destination ID has to be within the acceptable range [0 - MAX_THREADS_POSSIBLE],
 	*		it's OK to send a message to a destination ID for a thread that doesn't exist yet,
@@ -94,7 +94,7 @@ public:
 	*		uint8_t		receiver_id
 	*		message_t*	msg
 	*	Return:
-	*		0 on success
+	*		0 on success			{INVALID_DESTINATION_ID,or  ERROR_ALLOCATING_DYN_MEM}
 	*		Error code otherwise (non-zero)
 	*	Assumptions:
 	*		When a message is received, the wrapper_send object in the thread_id fifo is deleted, but

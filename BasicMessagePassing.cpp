@@ -185,14 +185,14 @@ int BasicMessagePassing::recv(uint8_t receiver_id, message_t* msg) {
 		std::cout << "        valid values of destination id : [0 - " << MAX_THREADS_POSSIBLE << " - 1]\n";
 		return INVALID_RECEIVER_ID;
 	}
-	if (msg == NULL) {
-		std::cout << "!!ERR!! BasicMessagePassing::recv received invalid msg address == NULL\n";
-		return INVALID_MSG_ADDRESS;
-	}
+	//if (msg == NULL) {
+	//	std::cout << "!!ERR!! BasicMessagePassing::recv received invalid msg address == NULL\n";
+	//	return INVALID_MSG_ADDRESS;
+	//}
 
 	m_queue[receiver_id].lock();
 	if (queues_head[receiver_id] == NULL) { // There's no message for this received, 
-
+		std::cout << "  Queue " << (unsigned int)receiver_id << " is empty\n";
 	}
 	message_wrapper* to_del = queues_head[receiver_id];
 	msg = queues_head[receiver_id]->msg;
