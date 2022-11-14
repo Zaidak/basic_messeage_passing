@@ -2,39 +2,39 @@
 
 // init all data members
 BasicMessagePassing::BasicMessagePassing() {
-	m_msgs.lock();
+	//m_msgs.lock();			// TODO delete
 	created_msgs_head = NULL;
 	created_msgs_tail = NULL;
-	m_msgs.unlock();
+	//m_msgs.unlock();
 
 	for (int i = 0; i < MAX_THREADS_POSSIBLE; i++) {
 		queues_head[i] = queues_tail[i] = NULL;
 	}
 }
+
 // delete all items in all doubly linked lists
 BasicMessagePassing::~BasicMessagePassing() {
-
 	message_t *nxt_msg;
-	m_msgs.lock();
+	//m_msgs.lock();		// TODO delete
 	message_t *at_msg= created_msgs_head;
 	while (at_msg != created_msgs_tail) {
 		nxt_msg = at_msg->next;
 		delete at_msg;
 		at_msg = nxt_msg;
 	}
-	m_msgs.unlock();
+	//m_msgs.unlock();
 
 	message_wrapper* at_wrapper;
 	message_wrapper* nxt_wrapper;
 	for (int i = 0; i < MAX_THREADS_POSSIBLE; i++){
-		m_queue[i].lock();
+		//m_queue[i].lock();
 		at_wrapper = queues_head[i];
 		while (at_wrapper != queues_tail[i]) {
 			nxt_wrapper = at_wrapper->next;
 			delete at_wrapper;
 			at_wrapper = nxt_wrapper;
 		}
-		m_queue[i].unlock();
+		//m_queue[i].unlock();
 	}
 }
 
@@ -50,13 +50,11 @@ BasicMessagePassing::~BasicMessagePassing() {
    - return the new message object address in memory
  */
 message_t* BasicMessagePassing::new_message() {
-
 	message_t* new_msg;
 	try {
 		new_msg = new message_t;
 	}
 	catch (const std::bad_alloc& e) {
-		// mem alloc failed, return NULL
 		std::cout << "!!ERR!! error while creating message\n";
 		std::cout << e.what() << std::endl;
 		return NULL;
@@ -65,34 +63,35 @@ message_t* BasicMessagePassing::new_message() {
 		std::cout << "!!!ERR!!! other error while creating a message" << std::endl;
 		return NULL;
 	}
-	// 2 - clear new message content
-	new_msg->len = 0; // legal length is 0 - MAX_DATA_LENTH. 
+
+	//  - clear new message content
+	new_msg->len = 0;
 	for (int i = 0; i < MAX_DATA_LENTH; i++) {
-		new_msg->data[i] = 0x00;		// init the data with repeated value
+		new_msg->data[i] = 0x00;
 	}
 	new_msg->next = NULL;
 	new_msg->prev = NULL;
 
-	// 3 - add it to the linked list
+	//  - add it to the linked list
 	m_msgs.lock();
 	if (created_msgs_head == NULL) {
-		created_msgs_head = created_msgs_tail = new_msg;		// add to empty Linked List 
+		created_msgs_head = created_msgs_tail = new_msg;
 	}
 	else {
-		created_msgs_tail->next = new_msg;		// add to tail of Linked List
+		created_msgs_tail->next = new_msg;
 		new_msg->prev = created_msgs_tail;
 		created_msgs_tail = new_msg;
 	}
 	m_msgs.unlock();
-	return new_msg;
 
+	return new_msg;
 }
+
 /*
   Steps to deleting a message:
    - Find all wrapper messages in the MAX_THREADS_POSSIBLE queues pointing to msg and delete the wrappers
    - Find it in the doubly linked list of created message objects
 */
-// before deleting the message, search for all the wrapper pointing to it and delete them first 
 void BasicMessagePassing::delete_message(message_t* msg) {
 	if (msg == NULL) {
 		std::cout << "!!ERR!! BasicMessagePassing::delete_message received invalid msg address == NULL\n";
@@ -133,16 +132,12 @@ void BasicMessagePassing::delete_message(message_t* msg) {
 }
 
 /*
-
  - Validate inputs
-			destination_id : valid range [0 - MAX_THREADS_POSSIBLE -1]
  - Creates a new message wrapper in the queue for thread_id,
      init new wrapper dst and msg
  - Update the corresponding doubly linked list 
-
 */
 
-// return error code or zero if success
 int BasicMessagePassing::send(uint8_t destination_id, message_t* msg) {
 	if (destination_id < 0 || destination_id >= MAX_THREADS_POSSIBLE) {
 		std::cout << "!!ERR!! BasicMessagePassing::send received invalid destination id value: " << (int)destination_id << '\n';
