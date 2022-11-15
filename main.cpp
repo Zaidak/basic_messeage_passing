@@ -47,7 +47,7 @@ Notes:
 #include <thread>
 #include <mutex> 
 #include <semaphore>
-#include <algorithm>
+//#include <algorithm>
 #include <vector>
 #include <cassert>
 
@@ -59,15 +59,15 @@ std::mutex m_cout;
 std::counting_semaphore sem_th0_count_packets{ 0 };                                            // to count packets queued for thread_id 0
 std::counting_semaphore sem_th1_count_packets{ 0 };                                            // to count packets queued for thread_id 1
 
-// simple test of library functions using 3 threads
+// Test 1: simple test of library functions using 3 threads
 void Test1ProducerTh(BasicMessagePassing* bmp); // creates messgae objects, sends to 2 Consumer threads. Doesn't need to receive messages; doesn't need an ID
 void Test1ConsumerTh0(BasicMessagePassing* bmp); // waits for available messages passed to it, deletes received messages after using them
 void Test1ConsumerTh1(BasicMessagePassing* bmp); // waits for available messages passed to it, deletes received messages after using them
 
-// Bad user test - bas function parameter values & memory allocation exceptions
+// Test 2: Bad user test - bas function parameter values & memory allocation exceptions
 void BadUserThread(BasicMessagePassing* bmp);
 
-// Performance Evaluation Test - using semaphores, continously sending and receiving messages
+// Test 3: Performance & thread safety - using semaphores, continously sending and receiving messages
 void ProducerTh(uint8_t thread_id, BasicMessagePassing* bmp, unsigned int max_thread_count);
 void ConsumerTh(uint8_t thread_id, BasicMessagePassing* bmp);
 
@@ -75,30 +75,35 @@ void ConsumerTh(uint8_t thread_id, BasicMessagePassing* bmp);
 int main(){
     BasicMessagePassing * p_basic_message_passing_uut;
 
-
     std::cout << "Testing Basic Message Passing Library." << std::endl;
+
     std::cout << "Test 1: a producer thread creates fixed nmber of messages and sends them in a deterministic way to 2 consumer threads" << std::endl;
     p_basic_message_passing_uut = new BasicMessagePassing();
     std::thread producer_thread(Test1ProducerTh, p_basic_message_passing_uut); // thread id is 0 but it doesn't really need it for this test
     std::thread consumer_thread1(Test1ConsumerTh0, p_basic_message_passing_uut);
     std::thread consumer_thread2(Test1ConsumerTh1, p_basic_message_passing_uut);
-
     producer_thread.join();
     consumer_thread1.detach();
     consumer_thread2.detach();
     delete p_basic_message_passing_uut;
-    /*
-    // Test with 10 producer threads sending data to 8 consumer threads
+
+
+    std::cout << "Test 2: Bad user thread will attempt to use invalid library API input values" << std::endl;
+    p_basic_message_passing_uut = new BasicMessagePassing();
+    std::thread bad_thread(BadUserThread, std::ref(p_basic_message_passing_uut));
+    bad_thread.join();
+    delete p_basic_message_passing_uut;
+
+    std::cout << "Test 3: 3 producer threads continuously sending messages to the 2 consumer threads from test 1" << std::endl ;
+    p_basic_message_passing_uut = new BasicMessagePassing();
     std::thread producers[10];
     std::thread consumers[8];
     unsigned int created_thread_count = 0;
-    unsigned int max_thread_count = std::min((unsigned int)MAX_THREADS_POSSIBLE, std::max((unsigned int)3, std::thread::hardware_concurrency()));
+    unsigned int max_thread_count = MAX_THREADS_POSSIBLE;// std::min((unsigned int)MAX_THREADS_POSSIBLE, std::max((unsigned int)3, std::thread::hardware_concurrency()));
 
 
-//    for (auto p : producers) {
-//        p = std::thread(ProducerTh, created_thread_count++, std::ref(basic_message_passing_uut), max_thread_count);
     for(int i=0; i<10 ;i++){
-        producers[i] = std::thread(ProducerTh, created_thread_count++, std::ref(basic_message_passing_uut), max_thread_count);
+        producers[i] = std::thread(ProducerTh, created_thread_count++, p_basic_message_passing_uut, max_thread_count);
     }
 
     for (int i = 0; i < 10; i++) {
@@ -112,7 +117,6 @@ int main(){
 
     max_thread_count = std::min((unsigned int)MAX_THREADS_POSSIBLE, std::max((unsigned int)3, std::thread::hardware_concurrency()));
     std::vector<std::thread> thread_pool(max_thread_count);
-    srand((unsigned)time(NULL));
 
     std::cout << "Hardware concurrency supports " << max_thread_count << " threads\n";
     std::cout << "Initializingn " << max_thread_count << " threads to test the BasicMessagePassing library\n";
@@ -120,35 +124,23 @@ int main(){
     // initializing at least 3 threads (1 writer and 2 consumers)
     // for threads 4-hardware_concurrency randomly choose a thread type
 
-    thread_pool.at(created_thread_count) = std::thread(ProducerTh, created_thread_count, std::ref(basic_message_passing_uut), max_thread_count);
+    thread_pool.at(created_thread_count) = std::thread(ProducerTh, created_thread_count, p_basic_message_passing_uut, max_thread_count);
     created_thread_count++;
 
-    thread_pool.at(created_thread_count) = std::thread(ConsumerTh, created_thread_count, std::ref(basic_message_passing_uut));
+    thread_pool.at(created_thread_count) = std::thread(ConsumerTh, created_thread_count, p_basic_message_passing_uut);
     created_thread_count++;
 
-    thread_pool.at(created_thread_count) = std::thread(ConsumerTh, created_thread_count, std::ref(basic_message_passing_uut));
+    thread_pool.at(created_thread_count) = std::thread(ConsumerTh, created_thread_count, p_basic_message_passing_uut);
     created_thread_count++;
 
     for (; created_thread_count < max_thread_count; created_thread_count++) {
-        thread_pool.at(created_thread_count) = std::thread(ConsumerTh, created_thread_count, std::ref(basic_message_passing_uut)); // TODO: randomize th function
+        thread_pool.at(created_thread_count) = std::thread(ConsumerTh, created_thread_count, p_basic_message_passing_uut);
     }
 
 
     for (unsigned int i = 0; i < created_thread_count; i++) {
         thread_pool.at(i).join();
     }
-
-    
-    //Tset with a bad user thread that will use invalid inputs to test library input validation
-    
-    */
-
-    std::cout << "Test 3: Bad user thread will attempt to use invalid library API input values\n";
-    p_basic_message_passing_uut = new BasicMessagePassing();
-    std::thread bad_thread(BadUserThread, std::ref(p_basic_message_passing_uut));
-//    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    bad_thread.join();
-    delete p_basic_message_passing_uut;
 
     std::cout << "Test program completed execution sucessfully." << std::endl;
     return 0;
@@ -325,13 +317,6 @@ void ProducerTh(uint8_t thread_id, BasicMessagePassing* bmp, unsigned int max_th
         std::lock_guard<std::mutex> lg_cout(m_cout);
         std::cout << "[+] Producer thread " << (unsigned int)thread_id << " created. Thread ID: " << std::this_thread::get_id() << std::endl;
     }
-
-    /*  for (unsigned int i = 0; i < max_thread_count; i++) {
-        if (i == thread_id) continue; // don't send to self -- for now at least
-        bmp->send(i, bmp->new_message());
-    }
-  */
-
 }
 void ConsumerTh(uint8_t thread_id, BasicMessagePassing* bmp) {
     {

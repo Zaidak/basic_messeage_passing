@@ -4,19 +4,14 @@
 #include <iostream>
 #include <mutex> 
 
- 
 #define MAX_THREADS_POSSIBLE 32				// Assuming this library is designed for an embedded system with a limited number of hardware_concurrency support 
 #define MAX_DATA_LENTH 255
-
-
 
 typedef struct message_t {
 	uint8_t len;
 	uint8_t data[MAX_DATA_LENTH];
 	struct message_t* next;
 };
-
-
 
 class BasicMessagePassing{
 public:
