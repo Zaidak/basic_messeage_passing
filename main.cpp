@@ -37,6 +37,10 @@ Possible improvements:
     - Syncrhonize access to std::cout using std::basic_osyncstream in the test app, instead of the global mutex & lock guards
     - Use Joinable threads in the test app to avoid
     - Lock guard scopes in the library likely posssible to be optimized, made smaller, seperate mutexes for a queue pointers can be used - espicially the delete_message function
+
+Notes:
+    - Test app uses asserts to verify the library is executing as expected. Error prompts in the console output are expected.
+    - When test cases expected values fail, an assert function call will interrupt the test run
 */
 
 #include <iostream>
@@ -69,7 +73,6 @@ void ConsumerTh(uint8_t thread_id, BasicMessagePassing* bmp);
 
 
 int main(){
-    //BasicMessagePassing basic_message_passing_uut;
     BasicMessagePassing * p_basic_message_passing_uut;
 
 
@@ -84,9 +87,6 @@ int main(){
     consumer_thread1.detach();
     consumer_thread2.detach();
     delete p_basic_message_passing_uut;
-
-    
-
     /*
     // Test with 10 producer threads sending data to 8 consumer threads
     std::thread producers[10];

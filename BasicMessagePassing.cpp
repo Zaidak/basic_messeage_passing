@@ -106,6 +106,7 @@ void BasicMessagePassing::delete_message(message_t* msg) {
 				to_delete_wrapper = at_wrapper;
 				if (prev_wrapper == NULL) {	// delete head node, and continue searching for other wrappers pointing to the same message
 					queues_head[i] = at_wrapper->next;
+					if (queues_head[i] == NULL) queues_tail[i] = NULL;
 				}
 				else if (at_wrapper->next == NULL) { // delete tail node
 					queues_tail[i] = prev_wrapper;
@@ -131,8 +132,10 @@ void BasicMessagePassing::delete_message(message_t* msg) {
 		at_msg = created_msgs_head;
 		while (at_msg != NULL){//created_msgs_tail) {
 			if (at_msg == msg) { // There will only be one object in this linked list 
-				if (prev_msg == NULL) // delete the first element of the linked list
+				if (prev_msg == NULL) { // delete the first element of the linked list
 					created_msgs_head = at_msg->next;
+					//if(created_msgs_head )
+				}
 				else if (at_msg->next == NULL) { // delete the last element of the linked list
 					created_msgs_tail = prev_msg;
 					prev_msg->next = NULL;
@@ -210,6 +213,7 @@ int BasicMessagePassing::recv(uint8_t receiver_id, message_t*& msg) {
 		std::cout << "        valid values of destination id : [0 - " << MAX_THREADS_POSSIBLE << " - 1]\n";
 		return INVALID_RECEIVER_ID;
 	}
+
 	message_wrapper* to_del;
 	{
 		std::lock_guard<std::mutex> lg_queue(m_queue[receiver_id]);
