@@ -1,8 +1,8 @@
 /*
 Embedded Software Engineer Challenge Question 2 - Basic Message Passing Library
-Zaid Al-Khatib
-nolosian@gmail.com
-11-14-2022
+Author: Zaid Al-Khatib
+Contact: nolosian@gmail.com
+Date delivered: 11-15-2022
 
 IDE & Compiler used to develop the library and test application:
     Microsoft Visual Studio Community 2022
@@ -20,23 +20,23 @@ IDE & Compiler used to develop the library and test application:
 Assumptions: 
 - Messages are expected to be received in FIFO order
 - Data length valid range: [0-MAX_DATA_LENTH] inclusive. I.e. 0 length messages are legal.
-- Any thread is allowed to read a message from the 
+- Any thread is allowed to read a message from the queue of any other thread
+- The action of sending a message can be received once. The message itself is not destroyed on receive
 - This library is to be used on a device with maximum 256 HW concurent threads 
-- NON-BLCOKIUNG MESSAGE PASSING
-- The Basic Messaage Passing Library is to be implemented without using STL or Boost data structures like std::queue or boost::lockfree::queue 
 - The library is to be block-free, threads calling recv function for an empty threa_id queue should not be blocked to wait for a message
-- The library does not need to be Lock-free; Mutexes, condition variables, and lock guards can be used to protect shared resources during non-atomic access operations.
-- Pre-reserving memory capacity for the message queueing is not required; rely on the OS to dynamically allocate memory from the heap instead of using a fixed size circular buffer.
-- Because thread IDs are stroed in uint8_t (maximum value of 255), the library is assumed designed for an embedded system with a limited number of thread hardware_concurrency 
-    support and a known upper limit imposoed by CPU architecture (e.x. less than 255 thread as for most common Intel X86-64 CPUs) 
+    if the queue to a thread is empty on receive, return an error code and don't block calling thread
+- The Basic Messaage Passing Library is to be implemented without using STL or Boost data structures like std::queue or boost::lockfree::queue 
+- The library does not need to be lock-free; Mutexes, condition variables, and lock guards can be used to protect shared resources during non-atomic access operations.
+- Felxible memory allocation is prefered to pre-reserving memory capacity for the message queueing
+    rely on the OS to dynamically allocate memory from the heap instead of using a fixed size circular buffer.
+- The library is assumed designed for an embedded system with limited number of hardware_concurrency support and a known upper limit imposoed by CPU architecture 
+    (common Intel X86-64 CPUs are less than 16) 
 - The test app is to fail and throw an exception when a test case fails to produce the expected output; use assert statements
 Possible improvements: 
-    Library Implementation:
-        - Implement a lock-free message passing library using Shared Pointers & Atomic operations
-    Test App 
-        - Use a thread pool for the test application instead of creating and deleting test threads.
-        - Syncrhonize access to std::cout using std::basic_osyncstream in the test app, instead of the global mutex & lock guards
-        - Use Joinable threads in the test app to avoid
+    - Use a thread pool for the test application instead of creating and deleting test threads.
+    - Syncrhonize access to std::cout using std::basic_osyncstream in the test app, instead of the global mutex & lock guards
+    - Use Joinable threads in the test app to avoid
+    - Lock guard scopes in the library likely posssible to be optimized, made smaller, seperate mutexes for a queue pointers can be used - espicially the delete_message function
 */
 
 #include <iostream>
@@ -55,10 +55,10 @@ std::mutex m_cout;
 std::counting_semaphore sem_th0_count_packets{ 0 };                                            // to count packets queued for thread_id 0
 std::counting_semaphore sem_th1_count_packets{ 0 };                                            // to count packets queued for thread_id 1
 
-void Test1ProducerTh(BasicMessagePassing* bmp); // creates messgae objects, sends to 2 Consumer threads. Doesn't need to receive messgae; doesn't need an ID
+// simple test of library functions using 3 threads
+void Test1ProducerTh(BasicMessagePassing* bmp); // creates messgae objects, sends to 2 Consumer threads. Doesn't need to receive messages; doesn't need an ID
 void Test1ConsumerTh0(BasicMessagePassing* bmp); // waits for available messages passed to it, deletes received messages after using them
 void Test1ConsumerTh1(BasicMessagePassing* bmp); // waits for available messages passed to it, deletes received messages after using them
-//void Test1ConsumerTh(uint8_t thread_id, BasicMessagePassing* bmp); // waits for available messages passed to it, deletes received messages after using them
 
 // Bad user test - bas function parameter values & memory allocation exceptions
 void BadUserThread(BasicMessagePassing* bmp);
@@ -66,7 +66,6 @@ void BadUserThread(BasicMessagePassing* bmp);
 // Performance Evaluation Test - using semaphores, continously sending and receiving messages
 void ProducerTh(uint8_t thread_id, BasicMessagePassing* bmp, unsigned int max_thread_count);
 void ConsumerTh(uint8_t thread_id, BasicMessagePassing* bmp);
-//void MonitorTh(uint8_t thread_id, BasicMessagePassing& bmp);
 
 
 int main(){
@@ -78,14 +77,13 @@ int main(){
     std::cout << "Test 1: a producer thread creates fixed nmber of messages and sends them in a deterministic way to 2 consumer threads" << std::endl;
     p_basic_message_passing_uut = new BasicMessagePassing();
     std::thread producer_thread(Test1ProducerTh, p_basic_message_passing_uut); // thread id is 0 but it doesn't really need it for this test
-//    std::thread consumer_thread1(Test1ConsumerTh, 0, std::ref(basic_message_passing_uut));
-//    std::thread consumer_thread2(Test1ConsumerTh, 1, std::ref(basic_message_passing_uut));
     std::thread consumer_thread1(Test1ConsumerTh0, p_basic_message_passing_uut);
     std::thread consumer_thread2(Test1ConsumerTh1, p_basic_message_passing_uut);
 
     producer_thread.join();
     consumer_thread1.detach();
     consumer_thread2.detach();
+    delete p_basic_message_passing_uut;
 
     
 
@@ -173,7 +171,7 @@ void Test1ProducerTh(BasicMessagePassing* bmp) {
 
     {
         std::lock_guard<std::mutex> lg_cout(m_cout);
-        std::cout << " Producer thread created 3 messages, to send to threads 0-2 respectively" << std::endl;
+        std::cout << " Producer thread created 3 messages, lengths: " << (int)msg0->len << ' ' << (int)msg1->len << ' ' << (int)msg2->len <<  " to send to threads 0 - 2" << std::endl;
     }
 
     status = bmp->send(0, msg0);
@@ -199,46 +197,48 @@ void Test1ProducerTh(BasicMessagePassing* bmp) {
         std::cout << " Producer thread sent msg 2 to thread 2 (doesn't exist, should be OK)" << std::endl;
     }
     
-/*    status = bmp->send(0, msg2);
+    status = bmp->send(0, msg2);
     sem_th0_count_packets.release(); // add 1 to semaphore counting messages sent to thread 1
     assert(status == BasicMessagePassing::SUCCESS);
     {
         std::lock_guard<std::mutex> lg_cout(m_cout);
         std::cout << " Producer thread sent msg 2 to thread 0" << std::endl;
-    }*/
+    }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000)); // Producer thread will sleep for a second, allowing consumers to receive messages
+    status = bmp->send(2, msg2);
+    status = bmp->send(2, msg2);
+    assert(status == BasicMessagePassing::SUCCESS);
     {
         std::lock_guard<std::mutex> lg_cout(m_cout);
-        std::cout << " Producer thread slept and woke up, will delete the 3  messages" << std::endl;
+        std::cout << " Producer thread sent msg 2 to thread two times, 3 sends of msg 2 are now in queue." << std::endl;
     }
+
+    bmp->delete_message(msg2);
+    {
+        std::lock_guard<std::mutex> lg_cout(m_cout);
+        std::cout << " Producer thread deleted the msg2 object. (should empty the queue to thread 2)" << std::endl;
+    }
+
+    message_t* recv_msg;
+    status = bmp->recv(2, recv_msg);
+    assert(status == BasicMessagePassing::THREAD_QUEUE_EMPTY);
+    {
+        std::lock_guard<std::mutex> lg_cout(m_cout);
+        std::cout << " Producer thread attempted to read a msg in the queue to thread 2 (which should be empty now)." << std::endl;
+    }
+
+
+    {
+        std::lock_guard<std::mutex> lg_cout(m_cout);
+        std::cout << " Producer thread will sleep for 4 seconds, then delete the remaining messages and exit" << std::endl;
+    }
+
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(4000)); // Producer thread will sleep for a second, allowing consumers to receive messages
     bmp->delete_message(msg0);
     bmp->delete_message(msg1);
-    bmp->delete_message(msg2);
 }
 
-//void Test1ConsumerTh(uint8_t thread_id, BasicMessagePassing* bmp) {
-//    {
-//        std::lock_guard<std::mutex> lg_cout(m_cout);
-//        std::cout << " Consumer thread ID: " << (unsigned int) thread_id << " will wait to acquire the semaphore of its oqueue, and display the length of any received message" << std::endl;
-//    }
-//    message_t* msg_recevied = NULL;
-//    while (1) {
-//        switch (thread_id) {
-//        case 0:
-//            sem_th0_count_packets.acquire();
-//            break;
-//        case 1:
-//            sem_th1_count_packets.acquire();
-//        }
-//        bmp->recv(thread_id, msg_recevied);
-//        {
-//            assert(msg_recevied != NULL);
-//            std::lock_guard<std::mutex> lg_cout(m_cout);
-//            std::cout << "  Consumer thread ID: " << (unsigned int)thread_id << " received msg of length: " << (unsigned int)msg_recevied->len << std::endl;
-//        }
-//    }
-//}
 void Test1ConsumerTh0(BasicMessagePassing* bmp) {
     {
         std::lock_guard<std::mutex> lg_cout(m_cout);
@@ -252,9 +252,13 @@ void Test1ConsumerTh0(BasicMessagePassing* bmp) {
         {
             if(status == BasicMessagePassing::SUCCESS)
             {
-                assert(msg_recevied != NULL);       // Failing
+                assert(msg_recevied != NULL);
                 std::lock_guard<std::mutex> lg_cout(m_cout);
                 std::cout << "  Consumer thread 0 received msg of length: " << (unsigned int)msg_recevied->len << std::endl;
+            }
+            else {
+                std::lock_guard<std::mutex> lg_cout(m_cout);
+                std::cout << "ERR  Consumer thread 0 encountered an error trying to receive a message." << std::endl;
             }
         }
     }
@@ -291,7 +295,6 @@ void BadUserThread(BasicMessagePassing* bmp) {
     bmp->delete_message(NULL);
     std::cout << "              - delete((message_t*)&status) - Skipped, Known Fails" << std::endl;
     //bmp->delete_message((message_t*)&status); //  TODO -- validate a malicious addresses that doesn't point to like this 
-
     std::cout << "              - send(-1, NULL) - should return INVALID_DESTINATION_ID" << std::endl;
     status = bmp->send(-1, NULL);
     assert(status == BasicMessagePassing::INVALID_DESTINATION_ID);
@@ -302,13 +305,13 @@ void BadUserThread(BasicMessagePassing* bmp) {
     status = bmp->send(2, NULL);
     assert(status == BasicMessagePassing::INVALID_MSG_ADDRESS);
     std::cout << "              - recv(-2, NULL) - should return INVALID_RECEIVER_ID" << std::endl;
-    status = bmp->recv(-2, NULL);
+    status = bmp->recv(-2, msg);
     assert(status == BasicMessagePassing::INVALID_RECEIVER_ID);
     std::cout << "              - recv(0, NULL) - should return THREAD_QUEUE_EMPTY" << std::endl;
-    status = bmp->recv(0, NULL);
+    status = bmp->recv(0, msg);
     assert(status == BasicMessagePassing::THREAD_QUEUE_EMPTY);
     std::cout << "              - recv(9876, NULL) - should return INVALID_RECEIVER_ID" << std::endl;
-    status = bmp->recv(9876, NULL);
+    status = bmp->recv(9876, msg);
     assert(status == BasicMessagePassing::INVALID_RECEIVER_ID);
     std::cout << "              - recv(0, msg) - should return THREAD_QUEUE_EMPTY" << std::endl;
     status = bmp->recv(0, msg);
@@ -336,10 +339,3 @@ void ConsumerTh(uint8_t thread_id, BasicMessagePassing* bmp) {
         std::cout << "[-] Consumer thread " << (unsigned int)thread_id << " created. Thread ID: " << std::this_thread::get_id() << std::endl;
     }
 }
-//void MonitorTh(uint8_t thread_id, BasicMessagePassing* bmp) {
-//    {
-//        std::lock_guard<std::mutex> lg_cout(m_cout);
-//        std::cout << "[o] Monitor thread " << (unsigned int)thread_id << " created. Thread ID: " << std::this_thread::get_id() << std::endl;
-//    }
-//}
-//

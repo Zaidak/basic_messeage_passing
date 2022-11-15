@@ -14,7 +14,6 @@ typedef struct message_t {
 	uint8_t len;
 	uint8_t data[MAX_DATA_LENTH];
 	struct message_t* next;
-	struct message_t* prev;
 };
 
 
@@ -91,7 +90,7 @@ public:
 	*		Create a send message object with a pointer to the desired message
 	*	Input:
 	*		uint8_t		receiver_id
-	*		message_t*	msg
+	*		message_t*&	msg			: Pointer passed by reference to return the address of receuved message to calling thread)
 	*	Return:
 	*		0 on success			{INVALID_DESTINATION_ID,or  ERROR_ALLOCATING_DYN_MEM, THREAD_QUEUE_EMPTY}
 	*		Error code otherwise (non-zero)
@@ -99,23 +98,22 @@ public:
 	*		When a message is received, the wrapper_send object in the thread_id fifo is deleted, but
 	*		the message it points to is not deleted.
 	*/
-	int recv(uint8_t receiver_id, message_t* msg);
+	int recv(uint8_t receiver_id, message_t*& msg);
 
 private:
-	// Doubly Linked List wrapper object for Send commands.
+	// Linked List wrapper object for Send commands.
 	typedef struct  message_wrapper {
 		message_t* msg;
 		uint8_t dst;
 		struct message_wrapper* next;
-		struct message_wrapper* prev;
 	};
 	
 
-	// Doubly Linked List of all created messages, used for deleting all created messages in destructor
+	// Linked List of all created messages, used for deleting all created messages in destructor
 	message_t* created_msgs_head;
 	message_t* created_msgs_tail;
 
-	// Doubly Linked List Fifo Queues for all possible thread_ids in the rang [0-MAX_THREADS_POSSIBLE]
+	// Linked List Fifo Queues for all possible thread_ids in the rang [0-MAX_THREADS_POSSIBLE]
 	message_wrapper* queues_head[MAX_THREADS_POSSIBLE];
 	message_wrapper* queues_tail[MAX_THREADS_POSSIBLE];
 
