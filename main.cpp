@@ -74,6 +74,7 @@ int main(){
     BasicMessagePassing * p_basic_message_passing_uut;
 
     std::cout << "Testing Basic Message Passing Library." << std::endl;
+    std::cout << "Hardware concurrency supports " << std::thread::hardware_concurrency() << " threads\n";
 
     std::cout << "Test 1: a producer thread creates fixed nmber of messages and sends them in a deterministic way to 2 consumer threads" << std::endl;
     p_basic_message_passing_uut = new BasicMessagePassing();
@@ -98,43 +99,11 @@ int main(){
 
 
     for(int i=0; i<3 ;i++){
-        producers[i] = std::thread(ProducerTh, p_basic_message_passing_uut, max_thread_count);
+        producers[i] = std::thread(ProducerTh, p_basic_message_passing_uut);
     }
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 3; i++) {
         producers[i].join();
-    }
-
-    // Test with at least 3 threads, up to the maximum the hardware can support (dev & testing with 16 thread supper) or 256
-   // unsigned int 
-    created_thread_count = 0;
-    std::cout << "Test 2: Testing with maximum hardware utilization\n";
-
-    max_thread_count = std::min((unsigned int)MAX_THREADS_POSSIBLE, std::max((unsigned int)3, std::thread::hardware_concurrency()));
-    std::vector<std::thread> thread_pool(max_thread_count);
-
-    std::cout << "Hardware concurrency supports " << max_thread_count << " threads\n";
-    std::cout << "Initializingn " << max_thread_count << " threads to test the BasicMessagePassing library\n";
-
-    // initializing at least 3 threads (1 writer and 2 consumers)
-    // for threads 4-hardware_concurrency randomly choose a thread type
-
-    thread_pool.at(created_thread_count) = std::thread(ProducerTh, created_thread_count, p_basic_message_passing_uut, max_thread_count);
-    created_thread_count++;
-
-    thread_pool.at(created_thread_count) = std::thread(ConsumerTh, created_thread_count, p_basic_message_passing_uut);
-    created_thread_count++;
-
-    thread_pool.at(created_thread_count) = std::thread(ConsumerTh, created_thread_count, p_basic_message_passing_uut);
-    created_thread_count++;
-
-    for (; created_thread_count < max_thread_count; created_thread_count++) {
-        thread_pool.at(created_thread_count) = std::thread(ConsumerTh, created_thread_count, p_basic_message_passing_uut);
-    }
-
-
-    for (unsigned int i = 0; i < created_thread_count; i++) {
-        thread_pool.at(i).join();
     }
 
     std::cout << "Test program completed execution sucessfully." << std::endl;
@@ -230,18 +199,18 @@ void Test1ConsumerTh0(BasicMessagePassing* bmp) {
     while (1) {
         sem_th0_count_packets.acquire();
         status = bmp->recv(0, msg_recevied);
-        {
-            if(status == BasicMessagePassing::SUCCESS)
-            {
+        //{
+            //if(status == BasicMessagePassing::SUCCESS)
+            //{
                 assert(msg_recevied != NULL);
                 std::lock_guard<std::mutex> lg_cout(m_cout);
                 std::cout << "  Consumer thread 0 received msg of length: " << (unsigned int)msg_recevied->len << std::endl;
-            }
-            else {
-                std::lock_guard<std::mutex> lg_cout(m_cout);
-                std::cout << "ERR  Consumer thread 0 encountered an UNEXPECETD error trying to receive a message." << std::endl;
-            }
-        }
+            //}
+            //else {
+            //    std::lock_guard<std::mutex> lg_cout(m_cout);
+            //    std::cout << "ERR  Consumer thread 0 encountered an UNEXPECETD error trying to receive a message." << std::endl;
+            //}
+        //}
     }
 }
 void Test1ConsumerTh1(BasicMessagePassing* bmp) {
@@ -254,13 +223,9 @@ void Test1ConsumerTh1(BasicMessagePassing* bmp) {
     while (1) {
         sem_th1_count_packets.acquire();
         status = bmp->recv(1, msg_recevied);
-        {
-            if (status == BasicMessagePassing::SUCCESS) {
                 assert(msg_recevied != NULL);
                 std::lock_guard<std::mutex> lg_cout(m_cout);
                 std::cout << "  Consumer thread 1 received msg of length: " << (unsigned int)msg_recevied->len << std::endl;
-            }
-        }
     }
 }
 
@@ -301,15 +266,9 @@ void BadUserThread(BasicMessagePassing* bmp) {
     return;
 }
 
-void ProducerTh(uint8_t thread_id, BasicMessagePassing* bmp, unsigned int max_thread_count) {
+void ProducerTh( BasicMessagePassing* bmp){
     {
         std::lock_guard<std::mutex> lg_cout(m_cout);
-        std::cout << "[+] Producer thread " << (unsigned int)thread_id << " created. Thread ID: " << std::this_thread::get_id() << std::endl;
-    }
-}
-void ConsumerTh(uint8_t thread_id, BasicMessagePassing* bmp) {
-    {
-        std::lock_guard<std::mutex> lg_cout(m_cout);
-        std::cout << "[-] Consumer thread " << (unsigned int)thread_id << " created. Thread ID: " << std::this_thread::get_id() << std::endl;
+        std::cout << "[+] Producer created. Thread ID: " << std::this_thread::get_id() << std::endl;
     }
 }
