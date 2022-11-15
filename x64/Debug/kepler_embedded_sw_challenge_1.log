@@ -4,9 +4,42 @@ C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\Ba
   main.cpp
 C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\BasicMessagePassing.h(14,2): warning C4091: 'typedef ': ignored on left of 'message_t' when no variable is declared
 C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\BasicMessagePassing.h(104): warning C4091: 'typedef ': ignored on left of 'BasicMessagePassing::message_wrapper' when no variable is declared
-C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(294,34): warning C4305: 'argument': truncation from 'int' to 'uint8_t'
-C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(294,24): warning C4309: 'argument': truncation of constant value
-C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(306,33): warning C4305: 'argument': truncation from 'int' to 'uint8_t'
-C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(306,24): warning C4309: 'argument': truncation of constant value
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(101,48): error C2065: 'created_thread_count': undeclared identifier
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(101,101): error C2065: 'max_thread_count': undeclared identifier
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(110,5): error C2065: 'created_thread_count': undeclared identifier
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(113,5): error C2065: 'max_thread_count': undeclared identifier
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(114,42): error C2065: 'max_thread_count': undeclared identifier
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(116,54): error C2065: 'max_thread_count': undeclared identifier
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(117,38): error C2065: 'max_thread_count': undeclared identifier
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(122,20): error C2065: 'created_thread_count': undeclared identifier
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(122,68): error C2065: 'created_thread_count': undeclared identifier
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(122,119): error C2065: 'max_thread_count': undeclared identifier
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(123,5): error C2065: 'created_thread_count': undeclared identifier
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(125,20): error C2065: 'created_thread_count': undeclared identifier
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(125,56): error C2065: 'ConsumerTh': undeclared identifier
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(125,68): error C2065: 'created_thread_count': undeclared identifier
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(126,5): error C2065: 'created_thread_count': undeclared identifier
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(128,20): error C2065: 'created_thread_count': undeclared identifier
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(128,56): error C2065: 'ConsumerTh': undeclared identifier
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(128,68): error C2065: 'created_thread_count': undeclared identifier
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(129,5): error C2065: 'created_thread_count': undeclared identifier
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(131,35): error C2065: 'max_thread_count': undeclared identifier
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(131,51): error C2059: syntax error: ';'
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(131,77): error C2143: syntax error: missing ';' before '{'
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(132,72): error C2065: 'created_thread_count': undeclared identifier
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(132,121): error C2059: syntax error: ')'
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(133,5): error C2143: syntax error: missing ';' before '}'
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(136,34): error C2065: 'created_thread_count': undeclared identifier
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(136,54): error C2059: syntax error: ';'
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(136,61): error C2143: syntax error: missing ';' before '{'
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(138,5): error C2143: syntax error: missing ';' before '}'
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(140,15): error C2947: expecting '>' to terminate template-argument-list, found '<<'
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(140,66): error C2947: expecting '>' to terminate template-argument-list, found '<<'
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(140,74): error C2365: 'std::endl': redefinition; previous definition was 'function'
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.33.31629\include\ostream(1004): message : see declaration of 'std::endl'
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(140,78): error C2059: syntax error: ';'
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(289,34): warning C4305: 'argument': truncation from 'int' to 'uint8_t'
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(289,24): warning C4309: 'argument': truncation of constant value
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(301,33): warning C4305: 'argument': truncation from 'int' to 'uint8_t'
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(301,24): warning C4309: 'argument': truncation of constant value
   Generating Code...
-  kepler_embedded_sw_challenge_1.vcxproj -> C:\Users\nolos\source\repos\win_std_thread_ex1\x64\Debug\kepler_embedded_sw_challenge_1.exe

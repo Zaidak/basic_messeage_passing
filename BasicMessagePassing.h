@@ -56,10 +56,10 @@ public:
 	*		None
 	*	Assumptions: 
 	*		It's assumed that receiving a message does not destroy it.
-	*		This is the only method for the user to delete messages created using new_message
+	*		This delete_message is the only method for the user to delete messages created using new_message
 	*		When a message is deleted, all send message requests for that message, that have not been received
 	*		are also to be deleted
-	*	Known Issues:
+	*	Known Issue:
 	*		The function will fail if the pointer does not point to a valid msg object.
 	*/
 	void delete_message(message_t* msg);
@@ -87,7 +87,7 @@ public:
 	*		uint8_t		receiver_id
 	*		message_t*&	msg			: Pointer passed by reference to return the address of receuved message to calling thread)
 	*	Return:
-	*		0 on success			{INVALID_DESTINATION_ID,or  ERROR_ALLOCATING_DYN_MEM, THREAD_QUEUE_EMPTY}
+	*		0 on success			{INVALID_DESTINATION_ID, THREAD_QUEUE_EMPTY}
 	*		Error code otherwise (non-zero)
 	*	Assumptions:
 	*		When a message is received, the wrapper_send object in the thread_id fifo is deleted, but

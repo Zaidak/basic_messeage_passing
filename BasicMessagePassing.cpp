@@ -15,7 +15,7 @@ BasicMessagePassing::BasicMessagePassing() {
 BasicMessagePassing::~BasicMessagePassing() {
 	message_t* nxt_msg;
 	message_t* at_msg = created_msgs_head;
-	while (at_msg!=NULL /*&& at_msg != created_msgs_tail*/) {
+	while (at_msg!=NULL) {
 		nxt_msg = at_msg->next;
 		delete at_msg;
 		at_msg = nxt_msg;
@@ -26,7 +26,7 @@ BasicMessagePassing::~BasicMessagePassing() {
 
 	for (int i = 0; i < MAX_THREADS_POSSIBLE; i++){
 		at_wrapper = queues_head[i];
-		while (at_wrapper != NULL /*&& at_wrapper != queues_tail[i]*/) {
+		while (at_wrapper != NULL) {
 			nxt_wrapper = at_wrapper->next;
 			delete at_wrapper;
 			at_wrapper = nxt_wrapper;
@@ -101,7 +101,7 @@ void BasicMessagePassing::delete_message(message_t* msg) {
 		at_wrapper = queues_head[i];
 		prev_wrapper = NULL;
 		to_delete_wrapper = NULL;
-		while (at_wrapper!= NULL /*&& at_wrapper != queues_tail[i]*/) {
+		while (at_wrapper!= NULL) {
 			if (at_wrapper->msg == msg) {
 				to_delete_wrapper = at_wrapper;
 				if (prev_wrapper == NULL) {	// delete head node, and continue searching for other wrappers pointing to the same message
@@ -130,11 +130,10 @@ void BasicMessagePassing::delete_message(message_t* msg) {
 	{
 		std::lock_guard<std::mutex> lg_msgs(m_msgs);
 		at_msg = created_msgs_head;
-		while (at_msg != NULL){//created_msgs_tail) {
+		while (at_msg != NULL){
 			if (at_msg == msg) { // There will only be one object in this linked list 
 				if (prev_msg == NULL) { // delete the first element of the linked list
 					created_msgs_head = at_msg->next;
-					//if(created_msgs_head )
 				}
 				else if (at_msg->next == NULL) { // delete the last element of the linked list
 					created_msgs_tail = prev_msg;
@@ -192,7 +191,6 @@ int BasicMessagePassing::send(uint8_t destination_id, message_t* msg) {
 		}
 		else {			// add to tail of queue
 			queues_tail[destination_id]->next = new_wrapper;
-			//new_wrapper->prev = queues_tail[destination_id];
 			queues_tail[destination_id] = new_wrapper;
 		}
 	}
@@ -217,7 +215,7 @@ int BasicMessagePassing::recv(uint8_t receiver_id, message_t*& msg) {
 	message_wrapper* to_del;
 	{
 		std::lock_guard<std::mutex> lg_queue(m_queue[receiver_id]);
-		if (queues_head[receiver_id] == NULL) { // There's no message for this received, 
+		if (queues_head[receiver_id] == NULL) { // There's no messages received for this thread. 
 			std::cout << "!!ERR!! BasicMessagePassing::recv attempted to read from an empty queue for received_id: " << (int)receiver_id << std::endl;
 			return THREAD_QUEUE_EMPTY;
 		}

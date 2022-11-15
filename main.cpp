@@ -47,7 +47,6 @@ Notes:
 #include <thread>
 #include <mutex> 
 #include <semaphore>
-//#include <algorithm>
 #include <vector>
 #include <cassert>
 
@@ -68,8 +67,7 @@ void Test1ConsumerTh1(BasicMessagePassing* bmp); // waits for available messages
 void BadUserThread(BasicMessagePassing* bmp);
 
 // Test 3: Performance & thread safety - using semaphores, continously sending and receiving messages
-void ProducerTh(uint8_t thread_id, BasicMessagePassing* bmp, unsigned int max_thread_count);
-void ConsumerTh(uint8_t thread_id, BasicMessagePassing* bmp);
+void ProducerTh(BasicMessagePassing* bmp);
 
 
 int main(){
@@ -79,7 +77,7 @@ int main(){
 
     std::cout << "Test 1: a producer thread creates fixed nmber of messages and sends them in a deterministic way to 2 consumer threads" << std::endl;
     p_basic_message_passing_uut = new BasicMessagePassing();
-    std::thread producer_thread(Test1ProducerTh, p_basic_message_passing_uut); // thread id is 0 but it doesn't really need it for this test
+    std::thread producer_thread(Test1ProducerTh, p_basic_message_passing_uut);
     std::thread consumer_thread1(Test1ConsumerTh0, p_basic_message_passing_uut);
     std::thread consumer_thread2(Test1ConsumerTh1, p_basic_message_passing_uut);
     producer_thread.join();
@@ -96,14 +94,11 @@ int main(){
 
     std::cout << "Test 3: 3 producer threads continuously sending messages to the 2 consumer threads from test 1" << std::endl ;
     p_basic_message_passing_uut = new BasicMessagePassing();
-    std::thread producers[10];
-    std::thread consumers[8];
-    unsigned int created_thread_count = 0;
-    unsigned int max_thread_count = MAX_THREADS_POSSIBLE;// std::min((unsigned int)MAX_THREADS_POSSIBLE, std::max((unsigned int)3, std::thread::hardware_concurrency()));
+    std::thread producers[3];
 
 
-    for(int i=0; i<10 ;i++){
-        producers[i] = std::thread(ProducerTh, created_thread_count++, p_basic_message_passing_uut, max_thread_count);
+    for(int i=0; i<3 ;i++){
+        producers[i] = std::thread(ProducerTh, p_basic_message_passing_uut, max_thread_count);
     }
 
     for (int i = 0; i < 10; i++) {
@@ -217,16 +212,10 @@ void Test1ProducerTh(BasicMessagePassing* bmp) {
     {
         std::lock_guard<std::mutex> lg_cout(m_cout);
         std::cout << " Producer thread attempted to read a msg in the queue to thread 2 (which should be empty now)." << std::endl;
+        std::cout << " Producer thread will sleep for 5 seconds, then delete the remaining messages and exit" << std::endl;
     }
 
-
-    {
-        std::lock_guard<std::mutex> lg_cout(m_cout);
-        std::cout << " Producer thread will sleep for 4 seconds, then delete the remaining messages and exit" << std::endl;
-    }
-
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(4000)); // Producer thread will sleep for a second, allowing consumers to receive messages
+    std::this_thread::sleep_for(std::chrono::milliseconds(4000)); // To provide a break in the console output for manual testing
     bmp->delete_message(msg0);
     bmp->delete_message(msg1);
 }
@@ -250,7 +239,7 @@ void Test1ConsumerTh0(BasicMessagePassing* bmp) {
             }
             else {
                 std::lock_guard<std::mutex> lg_cout(m_cout);
-                std::cout << "ERR  Consumer thread 0 encountered an error trying to receive a message." << std::endl;
+                std::cout << "ERR  Consumer thread 0 encountered an UNEXPECETD error trying to receive a message." << std::endl;
             }
         }
     }
