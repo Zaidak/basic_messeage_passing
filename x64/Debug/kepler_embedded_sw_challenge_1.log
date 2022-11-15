@@ -1,6 +1,12 @@
 ﻿  BasicMessagePassing.cpp
-C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\BasicMessagePassing.h(14,3): warning C4091: 'typedef ': ignored on left of 'message_t_orig' when no variable is declared
-C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\BasicMessagePassing.h(21,2): warning C4091: 'typedef ': ignored on left of 'message_t' when no variable is declared
-C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\BasicMessagePassing.h(113): warning C4091: 'typedef ': ignored on left of 'BasicMessagePassing::message_created' when no variable is declared
-C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\BasicMessagePassing.h(127): warning C4091: 'typedef ': ignored on left of 'BasicMessagePassing::message_wrapper' when no variable is declared
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\BasicMessagePassing.h(18,2): warning C4091: 'typedef ': ignored on left of 'message_t' when no variable is declared
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\BasicMessagePassing.h(111): warning C4091: 'typedef ': ignored on left of 'BasicMessagePassing::message_wrapper' when no variable is declared
+  main.cpp
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\BasicMessagePassing.h(18,2): warning C4091: 'typedef ': ignored on left of 'message_t' when no variable is declared
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\BasicMessagePassing.h(111): warning C4091: 'typedef ': ignored on left of 'BasicMessagePassing::message_wrapper' when no variable is declared
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(299,34): warning C4305: 'argument': truncation from 'int' to 'uint8_t'
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(299,24): warning C4309: 'argument': truncation of constant value
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(311,34): warning C4305: 'argument': truncation from 'int' to 'uint8_t'
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(311,24): warning C4309: 'argument': truncation of constant value
+  Generating Code...
   kepler_embedded_sw_challenge_1.vcxproj -> C:\Users\nolos\source\repos\win_std_thread_ex1\x64\Debug\kepler_embedded_sw_challenge_1.exe

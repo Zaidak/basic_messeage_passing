@@ -2,48 +2,35 @@
 
 // init all data members
 BasicMessagePassing::BasicMessagePassing() {
-	//m_msgs.lock();			// TODO delete
-	created_msgs_head = NULL;			// TODO delete
+	created_msgs_head = NULL;
 	created_msgs_tail = NULL;
-	created_msgs_head_orig = NULL;
-	created_msgs_tail_orig = NULL;
-	m_msgs.unlock();
 
 	for (int i = 0; i < MAX_THREADS_POSSIBLE; i++) {
-		queues_head[i] = queues_tail[i] = NULL;
-		m_queue[i].unlock();
+		queues_head[i] = NULL;
+		queues_tail[i] = NULL;
 	}
 }
 
-// delete all items in all doubly linked lists
+// delete all items in all doubly linked lists & unlock mutexs
 BasicMessagePassing::~BasicMessagePassing() {
-	message_t *nxt_msg;
-	//m_msgs.lock();		// TODO delete
-	message_t *at_msg= created_msgs_head;// TODO
-	message_created *at_msg_orig= created_msgs_head_orig;
+	message_t* nxt_msg;
+	message_t* at_msg = created_msgs_head;
 	while (at_msg != created_msgs_tail) {
 		nxt_msg = at_msg->next;
 		delete at_msg;
 		at_msg = nxt_msg;
-	}/*
-	while (at_msg_orig != created_msgs_tail_orig) {
-		nxt_msg = at_msg->next;
-		delete at_msg;
-		at_msg = nxt_msg;
-	}*/
-	//m_msgs.unlock();
+	}
 
 	message_wrapper* at_wrapper;
 	message_wrapper* nxt_wrapper;
+
 	for (int i = 0; i < MAX_THREADS_POSSIBLE; i++){
-		//m_queue[i].lock();
 		at_wrapper = queues_head[i];
 		while (at_wrapper != queues_tail[i]) {
 			nxt_wrapper = at_wrapper->next;
 			delete at_wrapper;
 			at_wrapper = nxt_wrapper;
 		}
-		//m_queue[i].unlock();
 	}
 }
 
@@ -76,22 +63,25 @@ message_t* BasicMessagePassing::new_message() {
 	//  - clear new message content
 	new_msg->len = 0;
 	for (int i = 0; i < MAX_DATA_LENTH; i++) {
-		new_msg->data[i] = 0x00;
+		new_msg->data[i] = 0;
 	}
 	new_msg->next = NULL;
 	new_msg->prev = NULL;
 
 	//  - add it to the linked list
-	m_msgs.lock();
-	if (created_msgs_head == NULL) {
-		created_msgs_head = created_msgs_tail = new_msg;
+	{
+		std::lock_guard<std::mutex> lg_m_queue(m_msgs);
+
+		if (created_msgs_head == NULL) {		// Linked list of created messages is empty
+			created_msgs_head = new_msg;
+			created_msgs_tail = new_msg;
+		}
+		else {
+			created_msgs_tail->next = new_msg;
+			new_msg->prev = created_msgs_tail;
+			created_msgs_tail = new_msg;
+		}
 	}
-	else {
-		created_msgs_tail->next = new_msg;
-		new_msg->prev = created_msgs_tail;
-		created_msgs_tail = new_msg;
-	}
-	m_msgs.unlock();
 
 	return new_msg;
 }
@@ -171,16 +161,18 @@ int BasicMessagePassing::send(uint8_t destination_id, message_t* msg) {
 	new_wrapper->dst = destination_id;
 	new_wrapper->msg = msg;
 
-	m_queue[destination_id].lock();
-	if (queues_head[destination_id] == NULL) { // first message in an empty queue
-		queues_head[destination_id] = queues_tail[destination_id] = new_wrapper;  // add to empty linked list 
+	{
+		std::lock_guard<std::mutex> lg_m_queue(m_queue[destination_id]);
+		if (queues_head[destination_id] == NULL) { // first message in an empty queue
+			queues_head[destination_id] = new_wrapper;
+			queues_tail[destination_id] = new_wrapper;  // add to empty linked list 
+		}
+		else {			// add to tail of queue
+			queues_tail[destination_id]->next = new_wrapper;
+			new_wrapper->prev = queues_tail[destination_id];
+			queues_tail[destination_id] = new_wrapper;
+		}
 	}
-	else {			// add to tail of queue
-		queues_tail[destination_id]->next = new_wrapper;
-		new_wrapper->prev = queues_tail[destination_id];
-		queues_tail[destination_id] = new_wrapper;
-	}
-	m_queue[destination_id].unlock();
 
 	return SUCCESS;
 }
@@ -194,21 +186,19 @@ int BasicMessagePassing::recv(uint8_t receiver_id, message_t* msg) {
 		std::cout << "        valid values of destination id : [0 - " << MAX_THREADS_POSSIBLE << " - 1]\n";
 		return INVALID_RECEIVER_ID;
 	}
-	//if (msg == NULL) {
-	//	std::cout << "!!ERR!! BasicMessagePassing::recv received invalid msg address == NULL\n";
-	//	return INVALID_MSG_ADDRESS;
-	//}
-
-	m_queue[receiver_id].lock();
-	if (queues_head[receiver_id] == NULL) { // There's no message for this received, 
-		std::cout << "!!ERR!! BasicMessagePassing::recv attempted to read from an empty queue for received_id: " << (int)receiver_id << std::endl;
-		return THREAD_QUEUE_EMPTY;
+	message_wrapper* to_del;
+	{
+		std::lock_guard<std::mutex> lg_m_queue(m_queue[receiver_id]);
+		if (queues_head[receiver_id] == NULL) { // There's no message for this received, 
+			std::cout << "!!ERR!! BasicMessagePassing::recv attempted to read from an empty queue for received_id: " << (int)receiver_id << std::endl;
+			return THREAD_QUEUE_EMPTY;
+		}
+		
+		to_del = queues_head[receiver_id];
+		queues_head[receiver_id] = queues_head[receiver_id]->next;
+		queues_head[receiver_id]->prev = NULL;
 	}
-	
-	message_wrapper* to_del = queues_head[receiver_id];
-	msg = queues_head[receiver_id]->msg;
-	queues_head[receiver_id] = queues_head[receiver_id]->next;
-	m_queue[receiver_id].unlock();
+	msg = to_del->msg;
 	delete to_del;
 
 	return SUCCESS;

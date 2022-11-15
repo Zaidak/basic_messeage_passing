@@ -8,10 +8,7 @@
 #define MAX_THREADS_POSSIBLE 32				// Assuming this library is designed for an embedded system with a limited number of hardware_concurrency support 
 #define MAX_DATA_LENTH 255
 
-typedef struct message_t_orig {
-	uint8_t len;
-	uint8_t data[255];
-} ;
+
 
 typedef struct message_t {
 	uint8_t len;
@@ -106,25 +103,18 @@ public:
 
 private:
 	// Doubly Linked List wrapper object for Send commands.
-	typedef struct message_created {
-		message_t_orig* msg;
-		struct message_created* next;
-		struct message_created* prev;
-	};
-
-	// Doubly Linked List of all created messages, used for deleting all created messages in destructor
-	message_created* created_msgs_head_orig;
-	message_created* created_msgs_tail_orig;
-	message_t* created_msgs_head;
-	message_t* created_msgs_tail;
-
-	// Doubly Linked List wrapper object for Send commands.
 	typedef struct  message_wrapper {
 		message_t* msg;
 		uint8_t dst;
 		struct message_wrapper* next;
 		struct message_wrapper* prev;
 	};
+	
+
+	// Doubly Linked List of all created messages, used for deleting all created messages in destructor
+	message_t* created_msgs_head;
+	message_t* created_msgs_tail;
+
 	// Doubly Linked List Fifo Queues for all possible thread_ids in the rang [0-MAX_THREADS_POSSIBLE]
 	message_wrapper* queues_head[MAX_THREADS_POSSIBLE];
 	message_wrapper* queues_tail[MAX_THREADS_POSSIBLE];
