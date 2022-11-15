@@ -8,17 +8,17 @@
 #define MAX_THREADS_POSSIBLE 32				// Assuming this library is designed for an embedded system with a limited number of hardware_concurrency support 
 #define MAX_DATA_LENTH 255
 
-typedef struct {
+typedef struct message_t_orig {
 	uint8_t len;
 	uint8_t data[255];
-} message_t_orig;
+} ;
 
 typedef struct message_t {
 	uint8_t len;
 	uint8_t data[MAX_DATA_LENTH];
 	struct message_t* next;
 	struct message_t* prev;
-}message_t;
+};
 
 
 
@@ -29,7 +29,8 @@ public:
 		INVALID_MSG_ADDRESS,
 		INVALID_DESTINATION_ID,
 		INVALID_RECEIVER_ID,
-		ERROR_ALLOCATING_DYN_MEM
+		ERROR_ALLOCATING_DYN_MEM,
+		THREAD_QUEUE_EMPTY
 	};
 
 	/*
@@ -66,7 +67,9 @@ public:
 	*		It's assumed that receiving a message does not destroy it.
 	*		This is the only method for the user to delete messages created using new_message
 	*		When a message is deleted, all send message requests for that message, that have not been received
-			are also to be deleted
+	*		are also to be deleted
+	*	Known Issues:
+	*		The function will fail if the pointer does not point to a valid msg object.
 	*/
 	void delete_message(message_t* msg);
 
@@ -78,13 +81,12 @@ public:
 	*		message_t *	msg
 	*	Return: 
 	*		0 on success
-	*		Error code otherwise	{INVALID_DESTINATION_ID, INVALID_MSG_ADDRESS, or ERROR_ALLOCATING_DYN_MEM}
+	*		Error code otherwise	{INVALID_DESTINATION_ID, INVALID_MSG_ADDRESS, ERROR_ALLOCATING_DYN_MEM}
 	*	Assumptions:
 	*		The destination ID has to be within the acceptable range [0 - MAX_THREADS_POSSIBLE],
 	*		it's OK to send a message to a destination ID for a thread that doesn't exist yet,
 	*		The same message object can be sent to multiple destination threads
 	*/
-
 	int send(uint8_t destination_id, message_t* msg);
 
 	/*
@@ -94,7 +96,7 @@ public:
 	*		uint8_t		receiver_id
 	*		message_t*	msg
 	*	Return:
-	*		0 on success			{INVALID_DESTINATION_ID,or  ERROR_ALLOCATING_DYN_MEM}
+	*		0 on success			{INVALID_DESTINATION_ID,or  ERROR_ALLOCATING_DYN_MEM, THREAD_QUEUE_EMPTY}
 	*		Error code otherwise (non-zero)
 	*	Assumptions:
 	*		When a message is received, the wrapper_send object in the thread_id fifo is deleted, but
@@ -104,17 +106,25 @@ public:
 
 private:
 	// Doubly Linked List wrapper object for Send commands.
+	typedef struct message_created {
+		message_t_orig* msg;
+		struct message_created* next;
+		struct message_created* prev;
+	};
+
+	// Doubly Linked List of all created messages, used for deleting all created messages in destructor
+	message_created* created_msgs_head_orig;
+	message_created* created_msgs_tail_orig;
+	message_t* created_msgs_head;
+	message_t* created_msgs_tail;
+
+	// Doubly Linked List wrapper object for Send commands.
 	typedef struct  message_wrapper {
 		message_t* msg;
 		uint8_t dst;
 		struct message_wrapper* next;
 		struct message_wrapper* prev;
-	}message_wrapper;
-
-	// Doubly Linked List of all created messages, used for deleting all created messages in destructor
-	message_t* created_msgs_head;
-	message_t* created_msgs_tail;
-
+	};
 	// Doubly Linked List Fifo Queues for all possible thread_ids in the rang [0-MAX_THREADS_POSSIBLE]
 	message_wrapper* queues_head[MAX_THREADS_POSSIBLE];
 	message_wrapper* queues_tail[MAX_THREADS_POSSIBLE];

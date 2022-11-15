@@ -3,12 +3,15 @@
 // init all data members
 BasicMessagePassing::BasicMessagePassing() {
 	//m_msgs.lock();			// TODO delete
-	created_msgs_head = NULL;
+	created_msgs_head = NULL;			// TODO delete
 	created_msgs_tail = NULL;
-	//m_msgs.unlock();
+	created_msgs_head_orig = NULL;
+	created_msgs_tail_orig = NULL;
+	m_msgs.unlock();
 
 	for (int i = 0; i < MAX_THREADS_POSSIBLE; i++) {
 		queues_head[i] = queues_tail[i] = NULL;
+		m_queue[i].unlock();
 	}
 }
 
@@ -16,12 +19,18 @@ BasicMessagePassing::BasicMessagePassing() {
 BasicMessagePassing::~BasicMessagePassing() {
 	message_t *nxt_msg;
 	//m_msgs.lock();		// TODO delete
-	message_t *at_msg= created_msgs_head;
+	message_t *at_msg= created_msgs_head;// TODO
+	message_created *at_msg_orig= created_msgs_head_orig;
 	while (at_msg != created_msgs_tail) {
 		nxt_msg = at_msg->next;
 		delete at_msg;
 		at_msg = nxt_msg;
-	}
+	}/*
+	while (at_msg_orig != created_msgs_tail_orig) {
+		nxt_msg = at_msg->next;
+		delete at_msg;
+		at_msg = nxt_msg;
+	}*/
 	//m_msgs.unlock();
 
 	message_wrapper* at_wrapper;
@@ -181,7 +190,7 @@ int BasicMessagePassing::send(uint8_t destination_id, message_t* msg) {
 // return error code, or 0 if success.
 int BasicMessagePassing::recv(uint8_t receiver_id, message_t* msg) {
 	if (receiver_id < 0 || receiver_id >= MAX_THREADS_POSSIBLE) {
-		std::cout << "!!ERR!! BasicMessagePassing::recv received invalid receiver_id id value: " << (int)receiver_id << '\n';
+		std::cout << "!!ERR!! BasicMessagePassing::recv received invalid receiver_id id value: " << (int)receiver_id << std::endl;
 		std::cout << "        valid values of destination id : [0 - " << MAX_THREADS_POSSIBLE << " - 1]\n";
 		return INVALID_RECEIVER_ID;
 	}
@@ -192,8 +201,10 @@ int BasicMessagePassing::recv(uint8_t receiver_id, message_t* msg) {
 
 	m_queue[receiver_id].lock();
 	if (queues_head[receiver_id] == NULL) { // There's no message for this received, 
-		std::cout << "  Queue " << (unsigned int)receiver_id << " is empty\n";
+		std::cout << "!!ERR!! BasicMessagePassing::recv attempted to read from an empty queue for received_id: " << (int)receiver_id << std::endl;
+		return THREAD_QUEUE_EMPTY;
 	}
+	
 	message_wrapper* to_del = queues_head[receiver_id];
 	msg = queues_head[receiver_id]->msg;
 	queues_head[receiver_id] = queues_head[receiver_id]->next;

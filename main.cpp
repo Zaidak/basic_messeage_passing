@@ -79,13 +79,13 @@ void ConsumerTh(uint8_t thread_id, BasicMessagePassing& bmp);
 std::counting_semaphore sem_th0_count_packets{ 0 };                                            // to count packets queued for thread_id 0
 std::counting_semaphore sem_th1_count_packets{ 0 };                                            // to count packets queued for thread_id 1
 
-int main()
-{
+int main(){
+    m_cout.unlock();
     BasicMessagePassing basic_message_passing_uut;
     std::cout << "Testing Basic Message Passing Library." << std::endl;
-
+    /*
     // Test with thread_id 0 creating and sending multiple messages for basic functional testing
-    std::cout << "Test 1: Thread1 creates fixed nmber of messages and sends them in a deterministic way to 2 consumer threads" << std::endl;
+    std::cout << "Test 1: a producer thread creates fixed nmber of messages and sends them in a deterministic way to 2 consumer threads" << std::endl;
     std::thread producer_thread(Test1ProducerTh, std::ref(basic_message_passing_uut)); // thread id is 0 but it doesn't really need it for this test
     std::thread consumer_thread1(Test1ConsumerTh, 0, std::ref(basic_message_passing_uut));
     std::thread consumer_thread2(Test1ConsumerTh, 1, std::ref(basic_message_passing_uut));
@@ -94,11 +94,11 @@ int main()
     producer_thread.join();
     consumer_thread1.join();
     consumer_thread2.join();
+    */
+    
 
     /*
-    Test with 10 producer threads sending data to 8 consumer threads
-    */
-
+    // Test with 10 producer threads sending data to 8 consumer threads
     std::thread producers[10];
     std::thread consumers[8];
     unsigned int created_thread_count = 0;
@@ -116,7 +116,8 @@ int main()
     }
 
     // Test with at least 3 threads, up to the maximum the hardware can support (dev & testing with 16 thread supper) or 256
-    /*unsigned int*/ created_thread_count = 0;
+   // unsigned int 
+    created_thread_count = 0;
     std::cout << "Test 2: Testing with maximum hardware utilization\n";
 
     max_thread_count = std::min((unsigned int)MAX_THREADS_POSSIBLE, std::max((unsigned int)3, std::thread::hardware_concurrency()));
@@ -135,7 +136,7 @@ int main()
     thread_pool.at(created_thread_count) = std::thread(ConsumerTh, created_thread_count, std::ref(basic_message_passing_uut));
     created_thread_count++;
 
-    thread_pool.at(created_thread_count) = std::thread(MonitorTh, created_thread_count, std::ref(basic_message_passing_uut));
+    thread_pool.at(created_thread_count) = std::thread(ConsumerTh, created_thread_count, std::ref(basic_message_passing_uut));
     created_thread_count++;
 
     for (; created_thread_count < max_thread_count; created_thread_count++) {
@@ -147,12 +148,14 @@ int main()
         thread_pool.at(i).join();
     }
 
-    /*
-    Tset with a bad user thread that will use invalid inputs to test library input validation
+    
+    //Tset with a bad user thread that will use invalid inputs to test library input validation
+    
     */
 
     std::cout << "Test 3: Bad user thread will attempt to use invalid library API input values\n";
     std::thread bad_thread(BadUserThread, std::ref(basic_message_passing_uut));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     bad_thread.join();
 
 
@@ -180,20 +183,25 @@ void Test1ProducerTh(BasicMessagePassing& bmp) {
         std::cout << " Producer thread created 3 messages, to send to threads 1-3 respectively" << std::endl;
     }
     status = bmp.send(0, msg1);
-    //  status = 2;     // test the assert statement
-    assert(status == BasicMessagePassing::SUCCESS, "Test 1: send message 1 to thread_id 1 successful");
-    sem_th0_count_packets.release(); // add 1 to semaphore counting messages sent to thread 0
-    bmp.send(1, msg1);
-    sem_th1_count_packets.release(); // add 1 to semaphore counting messages sent to thread 0
-    
-    
-    bmp.send(2, msg2);  // send a message to a non-existing thread.
+    assert(status == BasicMessagePassing::SUCCESS);
+    sem_th0_count_packets.release(); // Signal thread 0 that a message is added to its queue
+
+    status = bmp.send(1, msg1);
+    assert(status == BasicMessagePassing::SUCCESS);
+    sem_th1_count_packets.release(); // Signal thread 1 that a message is added to its queue
     
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000)); // Producer thread will sleep for a second, allowing consumers to receive messages
+    status = bmp.send(2, msg2);  // send a message to a non-existing thread for this test
+    assert(status == BasicMessagePassing::SUCCESS);
+    
+    status = bmp.send(0, msg2);
+    sem_th0_count_packets.release(); // add 1 to semaphore counting messages sent to thread 1
+    assert(status == BasicMessagePassing::SUCCESS);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000)); // Producer thread will sleep for a second, allowing consumers to receive messages
     {
         std::lock_guard<std::mutex> lg_cout(m_cout);
-        std::cout << " Producer thread will delete the 3  messages" << std::endl;
+        std::cout << " Producer thread slept and woke up, will delete the 3  messages" << std::endl;
     }
     bmp.delete_message(msg0);
     bmp.delete_message(msg1);
@@ -202,7 +210,7 @@ void Test1ProducerTh(BasicMessagePassing& bmp) {
 void Test1ConsumerTh(uint8_t thread_id, BasicMessagePassing& bmp) {
     {
         std::lock_guard<std::mutex> lg_cout(m_cout);
-        std::cout << " Consumer thread ID: " << (unsigned int) thread_id << " will go in an inifite loop, wait for messages on its queue, display the lenfth of any received message then delete it" << std::endl;
+        std::cout << " Consumer thread ID: " << (unsigned int) thread_id << " will wait to acquire the semaphore of its oqueue, and display the length of any received message" << std::endl;
     }
     message_t* msg_recevied = NULL;
     while (1) {
@@ -219,10 +227,6 @@ void Test1ConsumerTh(uint8_t thread_id, BasicMessagePassing& bmp) {
             std::lock_guard<std::mutex> lg_cout(m_cout);
             std::cout << "  Consumer thread ID: " << (unsigned int)thread_id << " received msg of length: " << (unsigned int)msg_recevied->len << std::endl;
         }
-
-        //while (bmp.recv(thread_id, msg_recevied) != BasicMessagePassing::SUCCESS) {
-
-        //}
     }
 }
 //void Test1ReceiverTh(uint8_t thread_id, BasicMessagePassing& bmp) {
@@ -231,20 +235,39 @@ void Test1ConsumerTh(uint8_t thread_id, BasicMessagePassing& bmp) {
 
 void BadUserThread(BasicMessagePassing& bmp) {
     unsigned int status;
-    {
-        std::lock_guard<std::mutex> lg_cout(m_cout);
-        std::cout << "Test Bad User - Thread will test error conditions, use of impropper function parameters and overflow queues" << std::endl;
-    }
+    message_t* msg = NULL;
+    
+    std::lock_guard<std::mutex> lg_cout(m_cout);    // to be kept for the duration of the bad user test
+    std::cout << "Test Bad User - Thread will test error conditions, use of impropper function parameters and overflow queues" << std::endl;
 
+    std::cout << "              - delete(NULL) - should display err message" << std::endl;
     bmp.delete_message(NULL);
-    //bmp.delete_message(); // TODO -- add malicious addresses? 
+    std::cout << "              - delete((message_t*)&status) - Skipped, Known Fails" << std::endl;
+    //bmp.delete_message((message_t*)&status); //  TODO -- validate a malicious addresses that doesn't point to like this 
+
+    std::cout << "              - send(-1, NULL) - should return INVALID_DESTINATION_ID" << std::endl;
     status = bmp.send(-1, NULL);
-    assert(status == BasicMessagePassing::INVALID_MSG_ADDRESS, "Test Basd Used: return invalid message address code for NULL msg pointer");
-    bmp.send(2542, NULL);
-    bmp.send(2, NULL);
-    bmp.recv(-2, NULL);
-    bmp.recv(0, NULL);
-    bmp.recv(9876, NULL);
+    assert(status == BasicMessagePassing::INVALID_DESTINATION_ID);
+    std::cout << "              - send(2542, NULL) - should return INVALID_DESTINATION_ID" << std::endl;
+    status = bmp.send(2542, NULL);
+    assert(status == BasicMessagePassing::INVALID_DESTINATION_ID);
+    std::cout << "              - send(2, NULL) - should return INVALID_MSG_ADDRESS" << std::endl;
+    status = bmp.send(2, NULL);
+    assert(status == BasicMessagePassing::INVALID_MSG_ADDRESS);
+    std::cout << "              - recv(-2, NULL) - should return INVALID_RECEIVER_ID" << std::endl;
+    status = bmp.recv(-2, NULL);
+    assert(status == BasicMessagePassing::INVALID_RECEIVER_ID);
+    std::cout << "              - recv(0, NULL) - should return THREAD_QUEUE_EMPTY" << std::endl;
+    status = bmp.recv(0, NULL);
+    assert(status == BasicMessagePassing::THREAD_QUEUE_EMPTY);
+    std::cout << "              - recv(9876, NULL) - should return INVALID_RECEIVER_ID" << std::endl;
+    status = bmp.recv(9876, NULL);
+    assert(status == BasicMessagePassing::INVALID_RECEIVER_ID);
+    std::cout << "              - recv(0, msg) - should return THREAD_QUEUE_EMPTY" << std::endl;
+    status = bmp.recv(0, msg);
+    assert(status == BasicMessagePassing::THREAD_QUEUE_EMPTY);
+    
+    return;
 }
 
 void ProducerTh(uint8_t thread_id, BasicMessagePassing& bmp, unsigned int max_thread_count) {

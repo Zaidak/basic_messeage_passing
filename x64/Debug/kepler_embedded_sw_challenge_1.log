@@ -1,8 +1,6 @@
-﻿  main.cpp
-C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(184,5): warning C4002: too many arguments for function-like macro invocation 'assert'
-C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(242,5): warning C4002: too many arguments for function-like macro invocation 'assert'
-C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(243,24): warning C4305: 'argument': truncation from 'int' to 'uint8_t'
-C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(243,14): warning C4309: 'argument': truncation of constant value
-C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(247,24): warning C4305: 'argument': truncation from 'int' to 'uint8_t'
-C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\main.cpp(247,14): warning C4309: 'argument': truncation of constant value
+﻿  BasicMessagePassing.cpp
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\BasicMessagePassing.h(14,3): warning C4091: 'typedef ': ignored on left of 'message_t_orig' when no variable is declared
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\BasicMessagePassing.h(21,2): warning C4091: 'typedef ': ignored on left of 'message_t' when no variable is declared
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\BasicMessagePassing.h(113): warning C4091: 'typedef ': ignored on left of 'BasicMessagePassing::message_created' when no variable is declared
+C:\Users\nolos\source\repos\win_std_thread_ex1\kepler_embedded_sw_challenge_1\BasicMessagePassing.h(127): warning C4091: 'typedef ': ignored on left of 'BasicMessagePassing::message_wrapper' when no variable is declared
   kepler_embedded_sw_challenge_1.vcxproj -> C:\Users\nolos\source\repos\win_std_thread_ex1\x64\Debug\kepler_embedded_sw_challenge_1.exe
