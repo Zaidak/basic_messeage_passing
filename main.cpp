@@ -62,24 +62,28 @@ std::mutex m_cout;
 
 std::counting_semaphore sem_th0_count_packets{ 0 };                                            // to count packets queued for thread_id 0
 std::counting_semaphore sem_th1_count_packets{ 0 };                                            // to count packets queued for thread_id 1
-
+std::array<std::counting_semaphore<2>, MAX_THREADS_POSSIBLE>;
 std::atomic_flag cont_receiving;
 
 // Test 1: simple test of library functions using 3 threads
 void Test1ProducerTh(BasicMessagePassing* bmp); // creates messgae objects, sends to 2 Consumer threads. Doesn't need to receive messages; doesn't need an ID
-void Test1ConsumerTh0(BasicMessagePassing* bmp); // waits for available messages passed to it, deletes received messages after using them
-void Test1ConsumerTh1(BasicMessagePassing* bmp); // waits for available messages passed to it, deletes received messages after using them
+void Test1ConsumerTh0(BasicMessagePassing* bmp); // waits for available messages passed to it
+void Test1ConsumerTh1(BasicMessagePassing* bmp); // waits for available messages passed to it
 
 // Test 2: Bad user test - bas function parameter values & memory allocation exceptions
 void BadUserThread(BasicMessagePassing* bmp);
 
 // Test 3: Performance & thread safety - using semaphores, continously sending and receiving messages
+
+
+
 void Test3ProducerTh(BasicMessagePassing* bmp);
+// Joinable thread, to be able to stop it remotely with a stop_token
+void Test3ConsumerTh(std::stop_token st, BasicMessagePassing* bmp, uint8_t thread_id); // waits for available messages passed to thread_id
 
 
 int main(){
     BasicMessagePassing * p_basic_message_passing_uut;
-
     std::cout << "Testing Basic Message Passing Library." << std::endl;
     std::cout << "Hardware concurrency supports " << std::thread::hardware_concurrency() << " threads\n";
 
@@ -97,7 +101,7 @@ int main(){
 
     std::cout << "Test group 2: Bad user thread will attempt to use invalid library API input values" << std::endl;
     p_basic_message_passing_uut = new BasicMessagePassing();
-    std::thread bad_thread(BadUserThread, std::ref(p_basic_message_passing_uut));
+    std::thread bad_thread(BadUserThread, p_basic_message_passing_uut);
     bad_thread.join();
     delete p_basic_message_passing_uut;
 
@@ -301,4 +305,23 @@ void Test3ProducerTh(BasicMessagePassing* bmp){
     }
     cont_receiving.clear();
 
+}
+void Test3ConsumerTh(std::stop_token st, BasicMessagePassing* bmp, uint8_t thread_id) {// waits for available messages passed to thread_id
+    {
+        std::lock_guard<std::mutex> lg_cout(m_cout);
+        std::cout << " Consumer thread " << (unsigned int)thread_id << " will wait to acquire the semaphore of its oqueue, and display the length of any received message" << std::endl;
+    }
+    message_t* msg_recevied = NULL;
+    int status;
+    while (!st.stop_requested()) { // cont_receiving.test()
+ //       if (cont_receiving.test()) break;
+
+        sem_th0_count_packets.acquire();
+        status = bmp->recv(0, msg_recevied);
+        if (status == BasicMessagePassing::SUCCESS) {
+            assert(msg_recevied != NULL);
+            std::lock_guard<std::mutex> lg_cout(m_cout);
+            std::cout << "  Consumer thread 0 received msg of length: " << (unsigned int)msg_recevied->len << std::endl;
+        }
+    }
 }
