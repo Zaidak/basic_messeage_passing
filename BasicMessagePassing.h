@@ -99,7 +99,7 @@ private:
 	// Linked List wrapper object for Send commands.
 	typedef struct  message_wrapper {
 		message_t* msg;
-		uint8_t dst;
+		//uint8_t dst;
 		struct message_wrapper* next;
 	};
 	

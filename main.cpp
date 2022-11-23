@@ -47,6 +47,22 @@ Possible improvements:
 Notes:
     - Test app uses asserts to verify the library is executing as expected. Error prompts in the console output are expected.
     - When test cases expected values fail, an assert function call will interrupt the test run
+
+
+
+
+
+Class requirements: 
+    Basic Message Passing:
+    - Design for a system that can run up to 255 threads, each with a unique thread ID.
+    - The library should enable 4 functions: 
+        - Create Message - reserves in memory space for a message of type message_t, return the address of newly allocated object memory
+        - Delete Message - deletes a message created with Create Message. Also deletes any sent but unreceived messages from any thread queue
+        - Send Message to destination_id - place a message created with Create Message in a fifo for a given thread (destination_id input)
+        - Receive Message for receiver_id - 
+
+
+
 */
 
 #include <iostream>

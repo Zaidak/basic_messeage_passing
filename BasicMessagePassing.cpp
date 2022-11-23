@@ -179,7 +179,7 @@ int BasicMessagePassing::send(uint8_t destination_id, message_t* msg) {
 		std::cout << e.what() << std::endl;
 		return ERROR_ALLOCATING_DYN_MEM;
 	}
-	new_wrapper->dst = destination_id;
+	//new_wrapper->dst = destination_id;
 	new_wrapper->msg = msg;
 	new_wrapper->next = NULL;
 
