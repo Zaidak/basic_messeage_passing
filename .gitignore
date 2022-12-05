@@ -1,0 +1,11 @@
+*.obj
+*.log
+*.7z
+*.tlog
+*.lastbuildstate
+*.recipe
+*.ilk
+*.txt
+*.idb
+*.pdb
+*.enc
