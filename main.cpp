@@ -1,5 +1,5 @@
 /*
-Embedded Software Engineer Challenge Question 2 - Basic Message Passing Library
+Basic Message Passing Library
 Author: Zaid Al-Khatib
 Contact: nolosian@gmail.com
 Date delivered: 11-15-2022
@@ -60,9 +60,6 @@ Class requirements:
         - Delete Message - deletes a message created with Create Message. Also deletes any sent but unreceived messages from any thread queue
         - Send Message to destination_id - place a message created with Create Message in a fifo for a given thread (destination_id input)
         - Receive Message for receiver_id - 
-
-
-
 */
 
 #include <iostream>
